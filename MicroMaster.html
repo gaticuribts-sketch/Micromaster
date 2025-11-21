@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microbiota MasterChef: Edición Bioquímica 🦠👨‍🍳</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;600&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Fredoka', sans-serif; }
+        h1, h2, h3 { font-family: 'Poppins', sans-serif; }
+        
+        /* Animaciones */
+        .bounce-enter { animation: bounceIn 0.5s; }
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .card-selected {
+            border: 3px solid #3B82F6;
+            background-color: #EFF6FF;
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.5);
+        }
+
+        .slot-filled { animation: pop 0.3s ease-out; }
+        @keyframes pop {
+            0% { transform: scale(0.9); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Scrollbar */
+        .scroller::-webkit-scrollbar { width: 8px; }
+        .scroller::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        .scroller::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .scroller::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- HEADER -->
+    <header class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-4 shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <span class="text-4xl animate-pulse">🦠</span>
+                <div>
+                    <h1 class="text-2xl font-bold leading-none">Microbiota MasterChef</h1>
+                    <p class="text-xs text-emerald-100 tracking-wider">Edición Bioquímica Molecular</p>
+                </div>
+            </div>
+            <div id="header-info" class="hidden flex flex-col items-end">
+                <div class="bg-white/20 px-3 py-1 rounded-lg backdrop-blur-sm text-right mb-1">
+                    <span class="text-xs uppercase opacity-80 block">Estado del Lab</span>
+                    <span id="lab-status" class="text-sm font-bold">Esperando muestras...</span>
+                </div>
+                <div class="flex gap-2 text-xs">
+                    <span class="bg-emerald-800/50 px-2 py-0.5 rounded" id="team-display">--</span>
+                    <span class="bg-emerald-800/50 px-2 py-0.5 rounded" id="diet-display">--</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow p-4 max-w-7xl mx-auto w-full relative">
+        
+        <!-- PANTALLA 1: CONFIGURACIÓN -->
+        <section id="setup-screen" class="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8 mt-10 bounce-enter border border-slate-100">
+            <h2 class="text-2xl font-bold text-center mb-2 text-emerald-700">Configuración del Experimento</h2>
+            <p class="text-center text-slate-500 text-sm mb-6">Diseña una dieta para modular la microbiota</p>
+            
+            <div class="mb-6">
+                <label class="block text-sm font-bold mb-2 text-slate-700">Nombre del Equipo Científico</label>
+                <input type="text" id="team-name" placeholder="Ej: Los Bifidobacterios" class="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-emerald-500 focus:outline-none transition bg-slate-50">
+            </div>
+
+            <div class="mb-8">
+                <label class="block text-sm font-bold mb-2 text-slate-700">Perfil del Paciente (Restricción)</label>
+                <div class="grid grid-cols-1 gap-2">
+                    <button onclick="selectDiet('omnivora', this)" class="diet-btn p-3 rounded-lg border-2 border-slate-200 hover:bg-emerald-50 text-left transition flex items-center gap-3 group active-diet">
+                        <span class="text-xl">🍖</span> <div><span class="font-bold">Omnívora</span><span class="block text-xs text-slate-400">Sin restricciones</span></div>
+                    </button>
+                    <button onclick="selectDiet('vegetariana', this)" class="diet-btn p-3 rounded-lg border-2 border-slate-200 hover:bg-emerald-50 text-left transition flex items-center gap-3 group">
+                        <span class="text-xl">🥦</span> <div><span class="font-bold">Vegetariana</span><span class="block text-xs text-slate-400">Sin carne ni pescado</span></div>
+                    </button>
+                    <button onclick="selectDiet('singluten', this)" class="diet-btn p-3 rounded-lg border-2 border-slate-200 hover:bg-emerald-50 text-left transition flex items-center gap-3 group">
+                        <span class="text-xl">🌾🚫</span> <div><span class="font-bold">Celiaquía</span><span class="block text-xs text-slate-400">Sin Gluten estricto</span></div>
+                    </button>
+                    <button onclick="selectDiet('sinlactosa', this)" class="diet-btn p-3 rounded-lg border-2 border-slate-200 hover:bg-emerald-50 text-left transition flex items-center gap-3 group">
+                        <span class="text-xl">🥛🚫</span> <div><span class="font-bold">Intolerante</span><span class="block text-xs text-slate-400">Sin Lactosa</span></div>
+                    </button>
+                </div>
+            </div>
+
+            <button onclick="startGame()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold py-4 rounded-xl shadow-lg transform transition hover:-translate-y-1">
+                Entrar al Laboratorio 🧪
+            </button>
+        </section>
+
+        <!-- PANTALLA 2: JUEGO -->
+        <section id="game-screen" class="hidden flex flex-col lg:flex-row gap-6 h-full mt-4">
+            
+            <!-- COLUMNA IZQUIERDA: BANCO DE ALIMENTOS -->
+            <div class="lg:w-1/3 bg-white rounded-2xl shadow-lg flex flex-col h-[80vh] sticky top-24 border border-slate-200">
+                <div class="p-4 border-b border-slate-100 bg-slate-50 rounded-t-2xl">
+                    <h3 class="font-bold text-lg text-slate-700 flex items-center gap-2">🛒 Despensa Bioactiva</h3>
+                    <p class="text-xs text-slate-500">Selecciona un alimento para ver sus propiedades y asignarlo.</p>
+                </div>
+                <div id="food-bank" class="p-4 overflow-y-auto scroller flex-grow grid grid-cols-3 gap-2 content-start bg-slate-50/50">
+                    <!-- Alimentos generados con JS -->
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA: MENÚS Y ZONAS -->
+            <div class="lg:w-2/3 flex flex-col gap-4">
+                
+                <!-- ZONA EUBIOSIS (BUENA) -->
+                <div class="bg-emerald-50 rounded-2xl border-2 border-emerald-200 p-5 flex-1 relative shadow-sm">
+                    <div class="absolute -top-3 -right-3 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">Objetivo: Eubiosis</div>
+                    <h3 class="font-bold text-xl text-emerald-800 flex items-center gap-2 mb-4">
+                        😇 Menú Antiinflamatorio
+                        <span class="text-xs font-normal text-emerald-600 bg-emerald-200/50 px-2 py-1 rounded">Rico en Fibra y Polifenoles</span>
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Slots -->
+                        <div class="menu-slot bg-white/60 p-2 rounded-xl border-2 border-dashed border-emerald-300 min-h-[130px] flex flex-col items-center justify-center cursor-pointer hover:bg-white transition relative group" onclick="placeItem('friend', 'breakfast')">
+                            <span class="text-xs font-bold uppercase text-emerald-400 mb-1 group-hover:text-emerald-600 transition">Desayuno</span>
+                            <div id="slot-friend-breakfast" class="slot-content w-full h-full flex items-center justify-center text-emerald-200 text-3xl">+</div>
+                        </div>
+                        <div class="menu-slot bg-white/60 p-2 rounded-xl border-2 border-dashed border-emerald-300 min-h-[130px] flex flex-col items-center justify-center cursor-pointer hover:bg-white transition relative group" onclick="placeItem('friend', 'lunch')">
+                            <span class="text-xs font-bold uppercase text-emerald-400 mb-1 group-hover:text-emerald-600 transition">Comida</span>
+                            <div id="slot-friend-lunch" class="slot-content w-full h-full flex items-center justify-center text-emerald-200 text-3xl">+</div>
+                        </div>
+                        <div class="menu-slot bg-white/60 p-2 rounded-xl border-2 border-dashed border-emerald-300 min-h-[130px] flex flex-col items-center justify-center cursor-pointer hover:bg-white transition relative group" onclick="placeItem('friend', 'dinner')">
+                            <span class="text-xs font-bold uppercase text-emerald-400 mb-1 group-hover:text-emerald-600 transition">Cena</span>
+                            <div id="slot-friend-dinner" class="slot-content w-full h-full flex items-center justify-center text-emerald-200 text-3xl">+</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ZONA DISBIOSIS (MALA) -->
+                <div class="bg-rose-50 rounded-2xl border-2 border-rose-200 p-5 flex-1 relative shadow-sm">
+                    <div class="absolute -top-3 -right-3 bg-rose-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">Control Negativo</div>
+                    <h3 class="font-bold text-xl text-rose-800 flex items-center gap-2 mb-4">
+                        😈 Menú Pro-inflamatorio
+                        <span class="text-xs font-normal text-rose-600 bg-rose-200/50 px-2 py-1 rounded">Disruptores y Ultraprocesados</span>
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Slots -->
+                        <div class="menu-slot bg-white/60 p-2 rounded-xl border-2 border-dashed border-rose-300 min-h-[130px] flex flex-col items-center justify-center cursor-pointer hover:bg-white transition relative group" onclick="placeItem('enemy', 'breakfast')">
+                            <span class="text-xs font-bold uppercase text-rose-400 mb-1 group-hover:text-rose-600 transition">Desayuno</span>
+                            <div id="slot-enemy-breakfast" class="slot-content w-full h-full flex items-center justify-center text-rose-200 text-3xl">+</div>
+                        </div>
+                        <div class="menu-slot bg-white/60 p-2 rounded-xl border-2 border-dashed border-rose-300 min-h-[130px] flex flex-col items-center justify-center cursor-pointer hover:bg-white transition relative group" onclick="placeItem('enemy', 'lunch')">
+                            <span class="text-xs font-bold uppercase text-rose-400 mb-1 group-hover:text-rose-600 transition">Comida</span>
+                            <div id="slot-enemy-lunch" class="slot-content w-full h-full flex items-center justify-center text-rose-200 text-3xl">+</div>
+                        </div>
+                        <div class="menu-slot bg-white/60 p-2 rounded-xl border-2 border-dashed border-rose-300 min-h-[130px] flex flex-col items-center justify-center cursor-pointer hover:bg-white transition relative group" onclick="placeItem('enemy', 'dinner')">
+                            <span class="text-xs font-bold uppercase text-rose-400 mb-1 group-hover:text-rose-600 transition">Cena</span>
+                            <div id="slot-enemy-dinner" class="slot-content w-full h-full flex items-center justify-center text-rose-200 text-3xl">+</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONTROLES -->
+                <div class="flex gap-4">
+                    <button onclick="resetBoard()" class="flex-1 py-4 bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold rounded-xl transition flex items-center justify-center gap-2">
+                        <span>🧹</span> Limpiar
+                    </button>
+                    <button onclick="evaluateMenus()" class="flex-[3] py-4 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-bold rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2">
+                        <span>🔬</span> Ejecutar Análisis Bioquímico
+                    </button>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL RESULTADOS (DASHBOARD CIENTÍFICO) -->
+    <div id="result-modal" class="fixed inset-0 bg-slate-900/80 hidden items-center justify-center z-[100] backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden transform transition-all scale-100 flex flex-col max-h-[90vh]">
+            
+            <!-- Header Modal -->
+            <div class="bg-slate-800 text-white p-5 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">📊</span>
+                    <div>
+                        <h2 class="text-xl font-bold font-poppins">Informe de Patología Clínica</h2>
+                        <p class="text-xs text-slate-400">Análisis de metabolitos y respuesta inmune</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span id="final-score" class="text-3xl font-black text-emerald-400">0</span>
+                    <p class="text-[10px] uppercase tracking-wider opacity-70">Puntos Salud</p>
+                </div>
+            </div>
+
+            <!-- Body Modal -->
+            <div class="p-6 overflow-y-auto scroller">
+                
+                <!-- Gráficas de Barras -->
+                <div class="space-y-5 mb-8 bg-slate-50 p-5 rounded-xl border border-slate-100">
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-slate-600 mb-1">
+                            <span>Producción de SCFA (Butirato/Propionato)</span>
+                            <span id="val-scfa">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-3">
+                            <div id="bar-scfa" class="bg-emerald-500 h-3 rounded-full transition-all duration-1000 shadow-sm" style="width: 0%"></div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1">Clave para la integridad de la barrera intestinal y energía de colonocitos.</p>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-slate-600 mb-1">
+                            <span>Nivel de Inflamación Sistémica</span>
+                            <span id="val-infl">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-3">
+                            <div id="bar-infl" class="bg-rose-500 h-3 rounded-full transition-all duration-1000 shadow-sm" style="width: 0%"></div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1">Respuesta de citoquinas proinflamatorias y activación inmune.</p>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-slate-600 mb-1">
+                            <span>Permeabilidad Intestinal (Leaky Gut)</span>
+                            <span id="val-perm">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-3">
+                            <div id="bar-perm" class="bg-amber-400 h-3 rounded-full transition-all duration-1000 shadow-sm" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feedback Detallado -->
+                <div id="feedback-container" class="space-y-3 text-sm mb-6">
+                    <!-- Feedback dinámico -->
+                </div>
+
+                <!-- Botón de Mecanismos -->
+                <button onclick="toggleMechanismDetails()" class="w-full border border-indigo-200 bg-indigo-50 text-indigo-700 text-sm font-bold py-2 rounded-lg hover:bg-indigo-100 mb-4 flex items-center justify-center gap-2">
+                    🧬 Ver Mecanismos Moleculares Detallados
+                </button>
+                
+                <div id="mechanism-details" class="hidden bg-slate-800 text-slate-200 p-4 rounded-xl text-xs space-y-2 mb-4 border-l-4 border-indigo-500">
+                    <!-- Detalles inyectados -->
+                </div>
+
+            </div>
+
+            <!-- Footer Modal -->
+            <div class="p-4 border-t border-slate-100 bg-slate-50 flex gap-3">
+                <button onclick="closeModal()" class="flex-1 bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-900 transition">
+                    Seguir Investigando
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIC SCRIPT -->
+    <script>
+        // --- 1. BASE DE DATOS UNIFICADA Y ENRIQUECIDA (30 ALIMENTOS) ---
+        // ATENCIÓN: Se han eliminado las pistas visuales (dots) en la función render.
+        const ingredientsDB = [
+            // --- AMIGOS (EUBIOSIS) ---
+            { id: 'kefir', name: 'Kéfir', emoji: '🥛', type: 'friend', tags: ['probiotic'], diets: ['omnivora', 'vegetariana', 'singluten'], score: 9, fiber: 0, mechanism: "Aporta *Lactobacillus* vivos que producen bacteriocinas e inhiben patógenos." },
+            { id: 'oats', name: 'Avena', emoji: '🌾', type: 'friend', tags: ['prebiotic', 'fiber'], diets: ['omnivora', 'vegetariana', 'sinlactosa'], score: 8, fiber: 8, mechanism: "Rica en beta-glucanos. Produce butirato al fermentar, reduciendo inflamación." },
+            { id: 'sauerkraut', name: 'Chucrut', emoji: '🥬', type: 'friend', tags: ['probiotic', 'fiber'], diets: ['omnivora', 'vegetariana', 'singluten', 'sinlactosa'], score: 8, fiber: 5, mechanism: "Metabolitos postbióticos modulan el GALT e inducen tolerancia." },
+            { id: 'apple', name: 'Manzana', emoji: '🍎', type: 'friend', tags: ['prebiotic', 'fiber'], diets: ['omnivora', 'vegetariana', 'singluten', 'sinlactosa'], score: 7, fiber: 6, mechanism: "La pectina nutre a *Akkermansia muciniphila*, protegiendo la barrera mucosa." },
+            { id: 'lentils', name: 'Lentejas', emoji: '🍲', type: 'friend', tags: ['prebiotic', 'fiber'], diets: ['omnivora', 'vegetariana', 'singluten', 'sinlactosa'], score: 7, fiber: 9, mechanism: "Galacto-oligosacáridos (GOS) fomentan bifidobacterias beneficiosas." },
+            { id: 'salmon', name: 'Salmón', emoji: '🐟', type: 'friend', tags: ['omegas'], diets: ['omnivora', 'singluten', 'sinlactosa'], score: 8, fiber: 0, mechanism: "Omega-3 (EPA/DHA) precursores de resolvinas antiinflamatorias." },
+            { id: 'kimchi', name: 'Kimchi', emoji: '🍱', type: 'friend', tags: ['probiotic'], diets: ['omnivora', 'vegetariana', 'singluten', 'sinlactosa'], score: 9, fiber: 4, mechanism: "Mejora la respuesta de IgA secretora en la mucosa." },
+            { id: 'artichoke', name: 'Alcachofa', emoji: '🥦', type: 'friend', tags: ['prebiotic', 'fiber'], diets: ['omnivora', 'vegetariana', 'singluten', 'sinlactosa'], score: 8, fiber: 10, mechanism: "Fuente top de inulina, aumenta drásticamente el propionato." },
+            { id: 'darkchoco', name: 'Choco 85%', emoji: '🍫', type: 'friend', tags: ['prebiotic'], diets: ['omnivora', 'vegetariana', 'singluten', 'sinlactosa'], score: 6, fiber: 4, mechanism: "Los polifenoles (flavanoles) incrementan *Bifidobacterium* y *Lactobacillus*." },
+            { id: 'oliveoil', name: 'AOVE', emoji: '🫒', type: 'friend', tags: ['healthyfat'], diets: ['omnivora', 'vegetariana', 'singluten', 'sinlactosa'], score: 7, fiber: 0, mechanism: "Polifenoles antioxidantes reducen el estrés oxidativo intestinal." },
+            { id: 'garlic', name: 'Ajo', emoji: '🧄', type: 'friend', tags: ['prebiotic'], diets: ['omnivora', 'vegetariana', 'singluten', 'sinlactosa'], score: 7, fiber: 2, mechanism: "Rico en inulina y fructooligosacáridos (FOS), potente antimicrobiano selectivo." },
+            { id: 'flaxseeds', name: 'Semillas Lino', emoji: '🌰', type: 'friend', tags: ['fiber', 'omegas'], diets: ['omnivora', 'vegetariana', 'singluten', 'sinlactosa'], score: 8, fiber: 9, mechanism: "Lignanos y mucílagos mejoran el tránsito y nutren la capa mucosa." },
+            { id: 'blueberries', name: 'Arándanos', emoji: '🫐', type: 'friend', tags: ['prebiotic'], diets: ['omnivora', 'vegetariana', 'singluten', 'sinlactosa'], score: 7, fiber: 4, mechanism: "Antocianinas que modulan la microbiota y reducen inflamación sistémica." },
+            { id: 'tempeh', name: 'Tempeh', emoji: '🍛', type: 'friend', tags: ['probiotic'], diets: ['omnivora', 'vegetariana', 'singluten', 'sinlactosa'], score: 8, fiber: 6, mechanism: "Soja fermentada con *Rhizopus*, alta biodisponibilidad de nutrientes." },
+            { id: 'greentea', name: 'Té Verde', emoji: '🍵', type: 'friend', tags: ['prebiotic'], diets: ['omnivora', 'vegetariana', 'singluten', 'sinlactosa'], score: 6, fiber: 0, mechanism: "Catequinas (EGCG) inhiben crecimiento de bacterias patógenas." },
+            { id: 'miso', name: 'Sopa Miso', emoji: '🥣', type: 'friend', tags: ['probiotic'], diets: ['omnivora', 'vegetariana', 'singluten', 'sinlactosa'], score: 7, fiber: 2, mechanism: "Fermentación con koji aporta enzimas digestivas y probióticos." },
+
+            // --- ENEMIGOS (DISBIOSIS) ---
+            { id: 'pastry', name: 'Bollería', emoji: '🍩', type: 'enemy', tags: ['ultraprocessed', 'transfat'], diets: ['omnivora', 'vegetariana'], score: -8, fiber: 1, mechanism: "Grasas trans favorecen *Proteobacteria*. Emulsionantes dañan la mucosa." },
+            { id: 'alcohol', name: 'Cerveza', emoji: '🍺', type: 'enemy', tags: ['alcohol'], diets: ['omnivora', 'vegetariana'], score: -9, fiber: 0, mechanism: "Tóxico directo. Aumenta permeabilidad (Leaky Gut) y paso de endotoxinas." },
+            { id: 'soda', name: 'Refresco', emoji: '🥤', type: 'enemy', tags: ['sugar'], diets: ['omnivora', 'vegetariana', 'singluten', 'sinlactosa'], score: -7, fiber: 0, mechanism: "Exceso de fructosa causa fermentación osmótica y disbiosis." },
+            { id: 'salami', name: 'Embutido', emoji: '🥓', type: 'enemy', tags: ['processed'], diets: ['omnivora', 'singluten', 'sinlactosa'], score: -6, fiber: 0, mechanism: "Nitritos y grasas saturadas fomentan bacterias sulfato-reductoras tóxicas." },
+            { id: 'fries', name: 'Fritos Ind.', emoji: '🍟', type: 'enemy', tags: ['transfat'], diets: ['omnivora', 'vegetariana', 'singluten', 'sinlactosa'], score: -7, fiber: 1, mechanism: "Aceites oxidados generan estrés oxidativo reduciendo la diversidad." },
+            { id: 'burger', name: 'Fast Food', emoji: '🍔', type: 'enemy', tags: ['ultraprocessed'], diets: ['omnivora'], score: -6, fiber: 1, mechanism: "Dieta alta en grasa/baja en fibra reduce diversidad bacteriana rápidamente." },
+            { id: 'energydrink', name: 'Bebida Energ.', emoji: '⚡', type: 'enemy', tags: ['sugar', 'chemical'], diets: ['omnivora', 'vegetariana', 'singluten', 'sinlactosa'], score: -8, fiber: 0, mechanism: "Azúcar + cafeína en exceso altera el eje intestino-cerebro y motilidad." },
+            { id: 'whitebread', name: 'Pan Blanco', emoji: '🍞', type: 'enemy', tags: ['refined'], diets: ['omnivora', 'vegetariana', 'sinlactosa'], score: -3, fiber: 1, mechanism: "Carbohidrato refinado de absorción rápida, alimenta cándidas y reduce diversidad." },
+            { id: 'candy', name: 'Golosinas', emoji: '🍬', type: 'enemy', tags: ['sugar'], diets: ['omnivora', 'vegetariana', 'singluten', 'sinlactosa'], score: -5, fiber: 0, mechanism: "Azúcar simple puro sin matriz alimentaria. Disbiosis rápida." },
+            { id: 'margarine', name: 'Margarina', emoji: '🧈', type: 'enemy', tags: ['transfat'], diets: ['omnivora', 'vegetariana', 'singluten', 'sinlactosa'], score: -5, fiber: 0, mechanism: "Aceites vegetales hidrogenados proinflamatorios." },
+            { id: 'icecream', name: 'Helado Ind.', emoji: '🍦', type: 'enemy', tags: ['sugar', 'fat'], diets: ['omnivora', 'vegetariana', 'singluten'], score: -5, fiber: 0, mechanism: "Alto en azúcar y emulsionantes (carboximetilcelulosa) que alteran el moco." },
+            { id: 'chips', name: 'Chips Bolsa', emoji: '🥔', type: 'enemy', tags: ['ultraprocessed'], diets: ['omnivora', 'vegetariana', 'singluten', 'sinlactosa'], score: -6, fiber: 1, mechanism: "Acrilamidas y aceites refinados. Alta palatabilidad altera la saciedad." },
+            { id: 'sweetener', name: 'Sacarina', emoji: '🧪', type: 'enemy', tags: ['chemical'], diets: ['omnivora', 'vegetariana', 'singluten', 'sinlactosa'], score: -4, fiber: 0, mechanism: "Algunos edulcorantes artificiales pueden inducir intolerancia a la glucosa." },
+            { id: 'pizza', name: 'Pizza Congelada', emoji: '🍕', type: 'enemy', tags: ['ultraprocessed'], diets: ['omnivora', 'vegetariana'], score: -5, fiber: 1, mechanism: "Harinas refinadas y quesos procesados con fosfatos añadidos." },
+        ];
+
+        // --- ESTADO DEL JUEGO ---
+        let gameState = {
+            teamName: '',
+            diet: 'omnivora',
+            selectedItemId: null,
+            menu: {
+                friend: { breakfast: null, lunch: null, dinner: null },
+                enemy: { breakfast: null, lunch: null, dinner: null }
+            }
+        };
+
+        // --- SETUP ---
+        function selectDiet(dietType, btnElement) {
+            gameState.diet = dietType;
+            document.querySelectorAll('.diet-btn').forEach(b => {
+                b.classList.remove('bg-emerald-100', 'border-emerald-500', 'ring-2', 'ring-emerald-300');
+                b.classList.add('border-slate-200');
+            });
+            btnElement.classList.remove('border-slate-200');
+            btnElement.classList.add('bg-emerald-100', 'border-emerald-500', 'ring-2', 'ring-emerald-300');
+        }
+
+        function startGame() {
+            const nameInput = document.getElementById('team-name').value;
+            if (!nameInput.trim()) {
+                alert("⚠️ Por favor, identifica a tu equipo científico.");
+                return;
+            }
+            gameState.teamName = nameInput;
+
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('header-info').classList.remove('hidden');
+            
+            // Actualizar Header
+            document.getElementById('team-display').innerText = `Equipo: ${gameState.teamName}`;
+            document.getElementById('diet-display').innerText = `Dieta: ${gameState.diet.toUpperCase()}`;
+            document.getElementById('lab-status').innerText = "Recogiendo muestras...";
+
+            renderFoodBank();
+        }
+
+        // --- JUGABILIDAD ---
+        function renderFoodBank() {
+            const container = document.getElementById('food-bank');
+            container.innerHTML = '';
+            
+            // Filtrar por dieta
+            let foods = ingredientsDB.filter(item => {
+                if (gameState.diet === 'omnivora') return true;
+                return item.diets.includes(gameState.diet);
+            });
+
+            // Barajar para que no estén ordenados por tipo
+            foods.sort(() => Math.random() - 0.5);
+
+            foods.forEach(food => {
+                // Verificar si ya está en uso
+                const isUsed = Object.values(gameState.menu.friend).includes(food.id) || 
+                               Object.values(gameState.menu.enemy).includes(food.id);
+
+                if (!isUsed) {
+                    const btn = document.createElement('div');
+                    // Se ha eliminado cualquier referencia visual al tipo (friend/enemy)
+                    btn.className = `cursor-pointer bg-white border border-slate-200 rounded-xl p-3 flex flex-col items-center justify-center shadow-sm hover:shadow-md hover:border-emerald-300 transition duration-200 select-none relative group ${gameState.selectedItemId === food.id ? 'card-selected' : ''}`;
+                    btn.onclick = () => selectItem(food.id);
+                    
+                    btn.innerHTML = `
+                        <span class="text-3xl mb-2 group-hover:scale-110 transition">${food.emoji}</span>
+                        <span class="text-xs text-center font-bold leading-tight text-slate-700">${food.name}</span>
+                        <!-- SIN PUNTOS DE COLOR -->
+                    `;
+                    container.appendChild(btn);
+                }
+            });
+        }
+
+        function selectItem(id) {
+            if (gameState.selectedItemId === id) gameState.selectedItemId = null;
+            else gameState.selectedItemId = id;
+            renderFoodBank();
+        }
+
+        function placeItem(zone, time) {
+            if (!gameState.selectedItemId) return;
+
+            const item = ingredientsDB.find(i => i.id === gameState.selectedItemId);
+            gameState.menu[zone][time] = item.id;
+            gameState.selectedItemId = null;
+            
+            renderFoodBank();
+            renderSlots();
+        }
+
+        function removeMapItem(zone, time) {
+            gameState.menu[zone][time] = null;
+            renderFoodBank();
+            renderSlots();
+        }
+
+        function renderSlots() {
+            ['friend', 'enemy'].forEach(zone => {
+                ['breakfast', 'lunch', 'dinner'].forEach(time => {
+                    const itemId = gameState.menu[zone][time];
+                    const slotEl = document.getElementById(`slot-${zone}-${time}`);
+                    const containerEl = slotEl.parentElement;
+                    
+                    if (itemId) {
+                        const item = ingredientsDB.find(i => i.id === itemId);
+                        const bgClass = zone === 'friend' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800';
+                        
+                        slotEl.innerHTML = `
+                            <div class="w-full h-full ${bgClass} rounded-lg flex flex-col items-center justify-center relative slot-filled border border-white/50 shadow-inner">
+                                <span class="text-4xl mb-1 drop-shadow-sm">${item.emoji}</span>
+                                <span class="text-[10px] font-bold text-center leading-none">${item.name}</span>
+                                <button onclick="event.stopPropagation(); removeMapItem('${zone}', '${time}')" class="absolute -top-2 -right-2 bg-slate-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow hover:bg-red-500 transition">✕</button>
+                            </div>
+                        `;
+                        containerEl.classList.remove('border-dashed');
+                        containerEl.classList.add('border-solid');
+                    } else {
+                        slotEl.innerHTML = `<span class="text-slate-300 text-3xl opacity-50">+</span>`;
+                        containerEl.classList.add('border-dashed');
+                        containerEl.classList.remove('border-solid');
+                    }
+                });
+            });
+        }
+
+        function resetBoard() {
+            if(confirm("¿Reiniciar experimento?")) {
+                gameState.menu = { friend: { breakfast: null, lunch: null, dinner: null }, enemy: { breakfast: null, lunch: null, dinner: null } };
+                renderSlots();
+                renderFoodBank();
+            }
+        }
+
+        // --- EVALUACIÓN CIENTÍFICA ---
+        function evaluateMenus() {
+            let score = 0;
+            let scfaPotential = 0;
+            let inflammation = 0;
+            let permeability = 0;
+            let feedbackHtml = '';
+            let mechanismsList = [];
+            let itemsCount = 0;
+
+            // 1. Analizar Menú AMIGO (Objetivo: Eubiosis)
+            Object.values(gameState.menu.friend).forEach(id => {
+                if(id) {
+                    itemsCount++;
+                    const item = ingredientsDB.find(i => i.id === id);
+                    mechanismsList.push(`<li><strong class="text-emerald-300">${item.name}:</strong> ${item.mechanism}</li>`);
+                    
+                    if (item.type === 'friend') {
+                        score += 10;
+                        scfaPotential += (item.fiber * 2) + 5; 
+                        feedbackHtml += `<div class="text-emerald-700 bg-emerald-50 p-2 rounded border border-emerald-100">✅ <b>${item.name}</b>: ¡Bien! Excelente promotor de eubiosis.</div>`;
+                    } else {
+                        score -= 10;
+                        inflammation += 15;
+                        permeability += 10;
+                        feedbackHtml += `<div class="text-rose-700 bg-rose-50 p-2 rounded border border-rose-100">❌ <b>${item.name}</b>: ¡Error! Has puesto un inflamatorio en el menú saludable.</div>`;
+                    }
+                }
+            });
+
+            // 2. Analizar Menú ENEMIGO (Objetivo: Identificar Disbiosis)
+            Object.values(gameState.menu.enemy).forEach(id => {
+                if(id) {
+                    itemsCount++;
+                    const item = ingredientsDB.find(i => i.id === id);
+                    mechanismsList.push(`<li><strong class="text-rose-300">${item.name}:</strong> ${item.mechanism}</li>`);
+
+                    if (item.type === 'enemy') {
+                        score += 10; 
+                        inflammation += 20; 
+                        permeability += 20;
+                        feedbackHtml += `<div class="text-emerald-700 bg-emerald-50 p-2 rounded border border-emerald-100">✅ <b>${item.name}</b>: Correcto. Identificado como disruptor.</div>`;
+                    } else {
+                        score -= 5;
+                        feedbackHtml += `<div class="text-amber-700 bg-amber-50 p-2 rounded border border-amber-100">⚠️ <b>${item.name}</b>: ¡Cuidado! Este alimento es bueno para la microbiota, no deberías eliminarlo.</div>`;
+                    }
+                }
+            });
+
+            if(itemsCount === 0) { alert("El laboratorio necesita muestras. Rellena los menús."); return; }
+
+            // Normalizar porcentajes 
+            const scfaPercent = Math.min(100, Math.round((scfaPotential / 60) * 100));
+            const inflPercent = Math.min(100, Math.round((inflammation / 80) * 100));
+            const permPercent = Math.min(100, Math.round((permeability / 80) * 100));
+
+            // Renderizar Modal
+            document.getElementById('final-score').innerText = score;
+            
+            updateBar('bar-scfa', 'val-scfa', scfaPercent);
+            updateBar('bar-infl', 'val-infl', inflPercent);
+            updateBar('bar-perm', 'val-perm', permPercent);
+
+            document.getElementById('feedback-container').innerHTML = feedbackHtml;
+            document.getElementById('mechanism-details').innerHTML = `<ul class="list-disc list-inside space-y-2">${mechanismsList.join('')}</ul>`;
+
+            document.getElementById('result-modal').classList.remove('hidden');
+            document.getElementById('result-modal').classList.add('flex');
+
+            if (score > 30 && scfaPercent > 40) launchConfetti();
+        }
+
+        function updateBar(barId, textId, value) {
+            document.getElementById(barId).style.width = `${value}%`;
+            document.getElementById(textId).innerText = `${value}%`;
+        }
+
+        function toggleMechanismDetails() {
+            const details = document.getElementById('mechanism-details');
+            details.classList.toggle('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('result-modal').classList.add('hidden');
+            document.getElementById('result-modal').classList.remove('flex');
+            document.getElementById('mechanism-details').classList.add('hidden');
+        }
+
+        function launchConfetti() {
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        }
+
+    </script>
+</body>
+</html>
